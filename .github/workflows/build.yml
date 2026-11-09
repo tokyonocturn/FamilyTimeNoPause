@@ -21,38 +21,38 @@ jobs:
         shell: pwsh
         run: |
           $candidates = @(
-            "C:\ProgramData\mingw64in\gcc.exe",
-            "C:\ProgramData\chocolateyin\gcc.exe",
-            "C:\msys64\mingw64in\gcc.exe"
+            'C:\ProgramData\mingw64\bin\gcc.exe',
+            'C:\ProgramData\chocolatey\bin\gcc.exe',
+            'C:\msys64\mingw64\bin\gcc.exe'
           )
           $found = $candidates | Where-Object { Test-Path $_ } | Select-Object -First 1
           if (-not $found) { $found = (Get-Command gcc -ErrorAction SilentlyContinue).Source }
-          if (-not $found) { throw "gcc not found after installing MinGW-w64" }
+          if (-not $found) { throw 'gcc not found after installing MinGW-w64' }
           "path=$found" | Out-File -FilePath $env:GITHUB_OUTPUT -Append
           & $found --version | Select-Object -First 1
 
       - name: Build
         shell: pwsh
-        run: .uild.ps1 -Compiler "${{ steps.gcc.outputs.path }}"
+        run: .\build.ps1 -Compiler "${{ steps.gcc.outputs.path }}"
 
       - name: Verify the forwarded exports are present
         shell: pwsh
         run: |
-          $names = & ".\tools\list-exports.ps1" -Path "dist\version.dll" | Out-String
+          $names = & '.\tools\list-exports.ps1' -Path 'dist\version.dll' | Out-String
           $required = @(
-            "GetFileVersionInfoA", "GetFileVersionInfoW",
-            "GetFileVersionInfoSizeA", "GetFileVersionInfoSizeW",
-            "VerQueryValueA", "VerQueryValueW"
+            'GetFileVersionInfoA', 'GetFileVersionInfoW',
+            'GetFileVersionInfoSizeA', 'GetFileVersionInfoSizeW',
+            'VerQueryValueA', 'VerQueryValueW'
           )
           foreach ($r in $required) {
             if ($names -notmatch [regex]::Escape($r)) { throw "Missing export: $r" }
           }
-          Write-Host "All required exports present."
+          Write-Host 'All required exports present.'
 
       - name: Checksums
         shell: pwsh
         run: |
-          $hash = (Get-FileHash -Algorithm SHA256 "dist\version.dll").Hash.ToLower()
+          $hash = (Get-FileHash -Algorithm SHA256 'dist\version.dll').Hash.ToLower()
           "$hash  version.dll" | Out-File -Encoding ASCII dist\SHA256SUMS.txt
           Get-Content dist\SHA256SUMS.txt
 
