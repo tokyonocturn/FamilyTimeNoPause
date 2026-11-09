@@ -31,7 +31,7 @@ function Convert-RvaToOffset([uint32]$rva) {
 }
 
 if ($exportRva -eq 0) {
-    Write-Host "  (no export directory)"
+    Write-Output "  (no export directory)"
     return
 }
 
@@ -46,7 +46,7 @@ for ($i = 0; $i -lt $nameCount; $i++) {
     $end = $off
     while ($bytes[$end] -ne 0) { $end++ }
     $name = [System.Text.Encoding]::ASCII.GetString($bytes, $off, $end - $off)
-    Write-Host "  $name"
+    Write-Output "  $name"
 }
 
-Write-Host "  ($nameCount exports)"
+Write-Output "  ($nameCount exports)"
