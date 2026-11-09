@@ -1,0 +1,51 @@
+name: Build
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  build:
+    name: Build version.dll
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install MinGW-w64
+        run: choco install mingw --no-progress -y
+
+      - name: Build
+        shell: pwsh
+        run: |
+          $gcc = "C:\ProgramData\chocolatey\bin\gcc.exe"
+          .\build.ps1 -Compiler $gcc
+
+      - name: Verify the forwarded exports are present
+        shell: pwsh
+        run: |
+          $names = & ".\tools\list-exports.ps1" -Path "dist\version.dll" | Out-String
+          $required = @(
+            "GetFileVersionInfoA", "GetFileVersionInfoW",
+            "GetFileVersionInfoSizeA", "GetFileVersionInfoSizeW",
+            "VerQueryValueA", "VerQueryValueW"
+          )
+          foreach ($r in $required) {
+            if ($names -notmatch [regex]::Escape($r)) { throw "Missing export: $r" }
+          }
+          Write-Host "All required exports present."
+
+      - name: Checksums
+        shell: pwsh
+        run: |
+          $hash = (Get-FileHash -Algorithm SHA256 "dist\version.dll").Hash.ToLower()
+          "$hash  version.dll" | Out-File -Encoding ASCII dist\SHA256SUMS.txt
+          Get-Content dist\SHA256SUMS.txt
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: FamilyTimeNoPause
+          path: |
+            dist/version.dll
+            dist/SHA256SUMS.txt

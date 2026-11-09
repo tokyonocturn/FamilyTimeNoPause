@@ -1,0 +1,10 @@
+dist/
+build/
+*.obj
+*.o
+*.pdb
+*.ilk
+*.exp
+*.lib
+.vs/
+artifacts/
