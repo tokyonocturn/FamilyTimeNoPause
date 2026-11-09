@@ -16,11 +16,24 @@ jobs:
       - name: Install MinGW-w64
         run: choco install mingw --no-progress -y
 
-      - name: Build
+      - name: Locate gcc
+        id: gcc
         shell: pwsh
         run: |
-          $gcc = "C:\ProgramData\chocolatey\bin\gcc.exe"
-          .\build.ps1 -Compiler $gcc
+          $candidates = @(
+            "C:\ProgramData\mingw64in\gcc.exe",
+            "C:\ProgramData\chocolateyin\gcc.exe",
+            "C:\msys64\mingw64in\gcc.exe"
+          )
+          $found = $candidates | Where-Object { Test-Path $_ } | Select-Object -First 1
+          if (-not $found) { $found = (Get-Command gcc -ErrorAction SilentlyContinue).Source }
+          if (-not $found) { throw "gcc not found after installing MinGW-w64" }
+          "path=$found" | Out-File -FilePath $env:GITHUB_OUTPUT -Append
+          & $found --version | Select-Object -First 1
+
+      - name: Build
+        shell: pwsh
+        run: .uild.ps1 -Compiler "${{ steps.gcc.outputs.path }}"
 
       - name: Verify the forwarded exports are present
         shell: pwsh
